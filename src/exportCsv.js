@@ -1,5 +1,21 @@
-export function exportWinesToCsv(wines) {
-  const headers = ['producer','wine_name','vintage','colour','country','region','subregion','appellation','bottle_size','quantity','storage_location','drinking_from','drinking_to','photo_url','notes'];
+export function exportWinesToCsv(wines, suffix = 'all') {
+  const headers = [
+    'producer',
+    'wine_name',
+    'vintage',
+    'colour',
+    'country',
+    'region',
+    'subregion',
+    'appellation',
+    'bottle_size',
+    'quantity',
+    'storage_location',
+    'drinking_from',
+    'drinking_to',
+    'photo_url',
+    'notes'
+  ];
 
   const rows = wines.map(wine => ({
     producer: wine.producer || '',
@@ -28,7 +44,7 @@ export function exportWinesToCsv(wines) {
   const link = document.createElement('a');
 
   link.href = url;
-  link.download = `my-cellar-export-${today}.csv`;
+  link.download = `my-cellar-${suffix}-${today}.csv`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

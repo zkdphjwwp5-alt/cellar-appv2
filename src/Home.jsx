@@ -1,12 +1,14 @@
 import React, { useMemo, useState } from 'react';
-import { AlertCircle, Camera, Plus, RefreshCw, Search, Wine } from 'lucide-react';
+import { AlertCircle, Camera, Download, Plus, RefreshCw, Search, Wine } from 'lucide-react';
 import WineCard from './WineCard.jsx';
 import { clean } from './helpers.js';
+import { exportWinesToCsv } from './exportCsv.js';
 
 export default function Home({ wines, loading, loadError, onRetry, onOpenWine, onScan }) {
   const [query, setQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [showSort, setShowSort] = useState(false);
+  const [showExport, setShowExport] = useState(false);
   const [filters, setFilters] = useState({ colour: '', country: '', region: '', producer: '', vintage: '', bottleSize: '', photo: '', stock: 'in-stock' });
   const [sortBy, setSortBy] = useState('producer');
 
@@ -57,8 +59,18 @@ export default function Home({ wines, loading, loadError, onRetry, onOpenWine, o
           <h1>{loading ? 'Loading…' : `${totalBottles.toLocaleString()} bottles`}</h1>
           <p>{loading ? 'Connecting to Supabase' : `${wines.length} wines loaded from Supabase`}</p>
         </div>
-        <Wine size={50} />
+        <button className="icon-button" onClick={() => setShowExport(current => !current)} aria-label="Export cellar">
+          <Download />
+        </button>
       </header>
+
+      {showExport && (
+        <section className="export-menu">
+          <button onClick={() => exportWinesToCsv(wines, 'all')}>Export all wines CSV</button>
+          <button onClick={() => exportWinesToCsv(filtered, 'filtered')}>Export filtered CSV</button>
+          <button disabled>Print wine list coming soon</button>
+        </section>
+      )}
 
       {loadError && (
         <section className="error">
@@ -79,7 +91,7 @@ export default function Home({ wines, loading, loadError, onRetry, onOpenWine, o
 
       <section className="actions">
         <button onClick={onScan}><Camera /> Scan Bottle</button>
-        <button onClick={onScan}><Plus /> Add from Photo</button>
+        <button onClick={onScan}><Plus /> Add Manually</button>
       </section>
 
       <label className="search">
