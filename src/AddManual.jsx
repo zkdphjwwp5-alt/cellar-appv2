@@ -126,8 +126,7 @@ export default function AddManual({ onBack, onCreateWine }) {
               <button key={`${match.producer}-${match.wine_name}-${index}`} className="manual-result" onClick={() => useMatch(match)}>
                 <strong>{[match.vintage, match.producer, match.wine_name].filter(Boolean).join(' ')}</strong>
                 <span>{[match.colour, match.country, match.region, match.appellation].filter(Boolean).join(' · ')}</span>
-                <small>Confidence: {Math.round(Number(match.confidence || 0) * 100)}%</small>
-              </button>
+                </button>
             ))}
           </section>
         )}
