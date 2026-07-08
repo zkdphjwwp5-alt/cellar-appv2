@@ -4,6 +4,7 @@ import Home from './Home.jsx';
 import WineDetail from './WineDetail.jsx';
 import ScanBottle from './ScanBottle.jsx';
 import AddManual from './AddManual.jsx';
+import WineList from './WineList.jsx';
 import { uploadWinePhoto, wineFromDatabase } from './helpers.js';
 
 export default function App() {
@@ -147,6 +148,15 @@ export default function App() {
     );
   }
 
+  if (screen === 'wine-list') {
+    return (
+      <WineList
+        wines={wines}
+        onBack={() => setScreen('home')}
+      />
+    );
+  }
+
   return (
     <Home
       wines={wines}
@@ -156,6 +166,7 @@ export default function App() {
       onOpenWine={openWine}
       onScan={() => setScreen('scan')}
       onAddManual={() => setScreen('manual')}
+      onWineList={() => setScreen('wine-list')}
     />
   );
 }

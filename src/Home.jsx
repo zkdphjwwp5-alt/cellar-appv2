@@ -1,10 +1,10 @@
 import React, { useMemo, useState } from 'react';
-import { AlertCircle, Camera, Download, Edit3, RefreshCw, Search, Wine } from 'lucide-react';
+import { AlertCircle, Camera, Download, Plus, RefreshCw, Search, Wine } from 'lucide-react';
 import WineCard from './WineCard.jsx';
 import { clean } from './helpers.js';
 import { exportWinesToCsv } from './exportCsv.js';
 
-export default function Home({ wines, loading, loadError, onRetry, onOpenWine, onScan, onAddManual }) {
+export default function Home({ wines, loading, loadError, onRetry, onOpenWine, onScan, onAddManual, onWineList }) {
   const [query, setQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [showSort, setShowSort] = useState(false);
@@ -68,7 +68,7 @@ export default function Home({ wines, loading, loadError, onRetry, onOpenWine, o
         <section className="export-menu">
           <button onClick={() => exportWinesToCsv(wines, 'all')}>Export all wines CSV</button>
           <button onClick={() => exportWinesToCsv(filtered, 'filtered')}>Export filtered CSV</button>
-          <button disabled>Print wine list coming soon</button>
+          <button onClick={onWineList}>Print wine list</button>
         </section>
       )}
 
@@ -91,7 +91,7 @@ export default function Home({ wines, loading, loadError, onRetry, onOpenWine, o
 
       <section className="actions">
         <button onClick={onScan}><Camera /> Scan Bottle</button>
-        <button onClick={onAddManual}><Edit3 /> Add Manually</button>
+        <button onClick={onAddManual}><Plus /> Add Manually</button>
       </section>
 
       <label className="search">
