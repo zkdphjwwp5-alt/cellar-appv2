@@ -88,14 +88,12 @@ export default function App() {
         colour: wineDetails.colour || '',
         country: wineDetails.country || '',
         region: wineDetails.region || '',
-        subregion: wineDetails.subregion || '',
         appellation: wineDetails.appellation || '',
         bottle_size: wineDetails.bottleSize || wineDetails.bottle_size || '750ml',
         quantity: Number(wineDetails.quantity || 1),
-        storage_location: wineDetails.storageLocation || wineDetails.storage_location || '',
-        drinking_from: wineDetails.drinkFrom || wineDetails.drinking_from || '',
-        drinking_to: wineDetails.drinkTo || wineDetails.drinking_to || '',
-        notes: wineDetails.notes || ''
+        drinking_from: wineDetails.drinkFrom ? Number(wineDetails.drinkFrom) : null,
+        drinking_to: wineDetails.drinkTo ? Number(wineDetails.drinkTo) : null,
+        notes: [wineDetails.notes || '', wineDetails.subregion ? `Subregion: ${wineDetails.subregion}` : '', wineDetails.storageLocation ? `Storage location: ${wineDetails.storageLocation}` : ''].filter(Boolean).join('\n')
       })
       .select('*')
       .single();

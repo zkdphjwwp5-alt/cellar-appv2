@@ -168,11 +168,11 @@ export default function AddManual({ onBack, onCreateWine }) {
             <input className="biginput" value={form.colour} onChange={event => updateField('colour', event.target.value)} placeholder="Colour" />
             <input className="biginput" value={form.country} onChange={event => updateField('country', event.target.value)} placeholder="Country" />
             <input className="biginput" value={form.region} onChange={event => updateField('region', event.target.value)} placeholder="Region" />
-            <input className="biginput" value={form.subregion} onChange={event => updateField('subregion', event.target.value)} placeholder="Subregion" />
+            <input className="biginput" value={form.subregion} onChange={event => updateField('subregion', event.target.value)} placeholder="Subregion (saved in notes for now)" />
             <input className="biginput" value={form.appellation} onChange={event => updateField('appellation', event.target.value)} placeholder="Appellation" />
             <input className="biginput" value={form.bottleSize} onChange={event => updateField('bottleSize', event.target.value)} placeholder="Bottle size" />
             <input className="biginput" type="number" min="0" value={form.quantity} onChange={event => updateField('quantity', event.target.value)} placeholder="Quantity" />
-            <input className="biginput" value={form.storageLocation} onChange={event => updateField('storageLocation', event.target.value)} placeholder="Storage location" />
+            <input className="biginput" value={form.storageLocation} onChange={event => updateField('storageLocation', event.target.value)} placeholder="Storage location (saved in notes for now)" />
             <input className="biginput" value={form.drinkFrom} onChange={event => updateField('drinkFrom', event.target.value)} placeholder="Drink from" />
             <input className="biginput" value={form.drinkTo} onChange={event => updateField('drinkTo', event.target.value)} placeholder="Drink to" />
             <input className="biginput" value={form.notes} onChange={event => updateField('notes', event.target.value)} placeholder="Notes" />
