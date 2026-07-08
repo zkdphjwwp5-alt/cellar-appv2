@@ -3,6 +3,7 @@ import { supabase } from './supabase.js';
 import Home from './Home.jsx';
 import WineDetail from './WineDetail.jsx';
 import ScanBottle from './ScanBottle.jsx';
+import AddManual from './AddManual.jsx';
 import { uploadWinePhoto, wineFromDatabase } from './helpers.js';
 
 export default function App() {
@@ -75,17 +76,35 @@ export default function App() {
     return updatedWine;
   }
 
-  async function createWine({ producer, wineName, vintage, photoFile }) {
+  async function createWine(details) {
     const { data, error } = await supabase
       .from('wines')
-      .insert({ producer: producer || '', wine_name: wineName || 'New wine', vintage: vintage || '', quantity: 1 })
+      .insert({
+        producer: details.producer || '',
+        wine_name: details.wineName || details.wine_name || 'New wine',
+        vintage: details.vintage || '',
+        colour: details.colour || '',
+        country: details.country || '',
+        region: details.region || '',
+        subregion: details.subregion || '',
+        appellation: details.appellation || '',
+        bottle_size: details.bottleSize || details.bottle_size || '750ml',
+        quantity: Number(details.quantity || 1),
+        storage_location: details.storageLocation || '',
+        drinking_from: details.drinkFrom || '',
+        drinking_to: details.drinkTo || '',
+        notes: details.notes || ''
+      })
       .select('*')
       .single();
 
     if (error || !data) return null;
 
     let newWine = wineFromDatabase(data);
-    if (photoFile) newWine = await savePhotoForWine(newWine, photoFile);
+
+    if (details.photoFile) {
+      newWine = await savePhotoForWine(newWine, details.photoFile);
+    }
 
     setWines(current => [newWine, ...current.filter(wine => wine.id !== newWine.id)]);
     openWine(newWine);
@@ -116,6 +135,10 @@ export default function App() {
     );
   }
 
+  if (screen === 'manual') {
+    return <AddManual onBack={() => setScreen('home')} onCreateWine={createWine} />;
+  }
+
   return (
     <Home
       wines={wines}
@@ -124,6 +147,7 @@ export default function App() {
       onRetry={loadWines}
       onOpenWine={openWine}
       onScan={() => setScreen('scan')}
+      onAddManual={() => setScreen('manual')}
     />
   );
 }
