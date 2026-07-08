@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { ChevronLeft, Search, Plus, Sparkles } from 'lucide-react';
+import { ChevronLeft, Plus, Search, Sparkles } from 'lucide-react';
 
 const emptyForm = {
   producer: '',
@@ -29,16 +29,18 @@ export default function AddManual({ onBack, onCreateWine }) {
   const [form, setForm] = useState(emptyForm);
   const [message, setMessage] = useState('');
   const [searching, setSearching] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
 
   const canSearch = useMemo(() => searchText.trim().length >= 2, [searchText]);
+  const canSave = clean(form.producer) || clean(form.wineName);
 
   function updateField(field, value) {
     setForm(current => ({ ...current, [field]: value }));
   }
 
   async function searchWine() {
-    if (!canSearch) return;
+    if (!canSearch || searching) return;
 
     setSearching(true);
     setMessage('Searching wine details…');
@@ -55,7 +57,7 @@ export default function AddManual({ onBack, onCreateWine }) {
 
       if (!response.ok) throw new Error(data.error || 'Search failed');
 
-      const wines = data.wines || [];
+      const wines = Array.isArray(data.wines) ? data.wines : [];
       setMatches(wines);
       setMessage(wines.length ? 'Select a match, or create manually.' : 'No match found. Create manually instead.');
 
@@ -87,12 +89,34 @@ export default function AddManual({ onBack, onCreateWine }) {
       drinkTo: clean(match.drink_to),
       notes: clean(match.notes)
     }));
+
     setShowForm(true);
     setMessage('Details pre-filled. Check them, then save.');
   }
 
+  function createManually() {
+    setForm(current => ({
+      ...current,
+      producer: current.producer || searchText
+    }));
+    setShowForm(true);
+  }
+
   async function saveWine() {
-    await onCreateWine(form);
+    if (!canSave || saving) {
+      setMessage('Add at least a producer or wine name.');
+      return;
+    }
+
+    setSaving(true);
+    setMessage('Saving wine…');
+
+    const savedWine = await onCreateWine(form);
+
+    if (!savedWine) {
+      setMessage('Wine could not be saved. Please check the details and try again.');
+      setSaving(false);
+    }
   }
 
   return (
@@ -126,12 +150,13 @@ export default function AddManual({ onBack, onCreateWine }) {
               <button key={`${match.producer}-${match.wine_name}-${index}`} className="manual-result" onClick={() => useMatch(match)}>
                 <strong>{[match.vintage, match.producer, match.wine_name].filter(Boolean).join(' ')}</strong>
                 <span>{[match.colour, match.country, match.region, match.appellation].filter(Boolean).join(' · ')}</span>
-                </button>
+                <small>AI match</small>
+              </button>
             ))}
           </section>
         )}
 
-        <button className="photo-button" onClick={() => setShowForm(true)}>
+        <button className="photo-button" onClick={createManually}>
           <Plus /> Create manually instead
         </button>
 
@@ -152,7 +177,9 @@ export default function AddManual({ onBack, onCreateWine }) {
             <input className="biginput" value={form.drinkTo} onChange={event => updateField('drinkTo', event.target.value)} placeholder="Drink to" />
             <input className="biginput" value={form.notes} onChange={event => updateField('notes', event.target.value)} placeholder="Notes" />
             <input className="biginput" type="file" accept="image/*" onChange={event => updateField('photoFile', event.target.files?.[0] || null)} />
-            <button className="photo-button" onClick={saveWine}><Plus /> Save wine</button>
+            <button className="photo-button" onClick={saveWine} disabled={saving}>
+              <Plus /> {saving ? 'Saving…' : 'Save wine'}
+            </button>
           </section>
         )}
       </section>

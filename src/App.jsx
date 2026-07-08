@@ -77,33 +77,38 @@ export default function App() {
   }
 
   async function createWine(details) {
+    const wineDetails = details || {};
+
     const { data, error } = await supabase
       .from('wines')
       .insert({
-        producer: details.producer || '',
-        wine_name: details.wineName || details.wine_name || 'New wine',
-        vintage: details.vintage || '',
-        colour: details.colour || '',
-        country: details.country || '',
-        region: details.region || '',
-        subregion: details.subregion || '',
-        appellation: details.appellation || '',
-        bottle_size: details.bottleSize || details.bottle_size || '750ml',
-        quantity: Number(details.quantity || 1),
-        storage_location: details.storageLocation || '',
-        drinking_from: details.drinkFrom || '',
-        drinking_to: details.drinkTo || '',
-        notes: details.notes || ''
+        producer: wineDetails.producer || '',
+        wine_name: wineDetails.wineName || wineDetails.wine_name || 'New wine',
+        vintage: wineDetails.vintage || '',
+        colour: wineDetails.colour || '',
+        country: wineDetails.country || '',
+        region: wineDetails.region || '',
+        subregion: wineDetails.subregion || '',
+        appellation: wineDetails.appellation || '',
+        bottle_size: wineDetails.bottleSize || wineDetails.bottle_size || '750ml',
+        quantity: Number(wineDetails.quantity || 1),
+        storage_location: wineDetails.storageLocation || wineDetails.storage_location || '',
+        drinking_from: wineDetails.drinkFrom || wineDetails.drinking_from || '',
+        drinking_to: wineDetails.drinkTo || wineDetails.drinking_to || '',
+        notes: wineDetails.notes || ''
       })
       .select('*')
       .single();
 
-    if (error || !data) return null;
+    if (error || !data) {
+      console.error('Create wine error:', error);
+      return null;
+    }
 
     let newWine = wineFromDatabase(data);
 
-    if (details.photoFile) {
-      newWine = await savePhotoForWine(newWine, details.photoFile);
+    if (wineDetails.photoFile) {
+      newWine = await savePhotoForWine(newWine, wineDetails.photoFile);
     }
 
     setWines(current => [newWine, ...current.filter(wine => wine.id !== newWine.id)]);
@@ -136,7 +141,12 @@ export default function App() {
   }
 
   if (screen === 'manual') {
-    return <AddManual onBack={() => setScreen('home')} onCreateWine={createWine} />;
+    return (
+      <AddManual
+        onBack={() => setScreen('home')}
+        onCreateWine={createWine}
+      />
+    );
   }
 
   return (
