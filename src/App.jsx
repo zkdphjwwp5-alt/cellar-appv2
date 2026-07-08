@@ -2,9 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from './supabase.js';
 import Home from './Home.jsx';
 import WineDetail from './WineDetail.jsx';
+import EditWine from './EditWine.jsx';
 import ScanBottle from './ScanBottle.jsx';
 import AddManual from './AddManual.jsx';
-import WineList from './WineList.jsx';
 import { uploadWinePhoto, wineFromDatabase } from './helpers.js';
 
 export default function App() {
@@ -115,6 +115,39 @@ export default function App() {
     return newWine;
   }
 
+  async function saveEditedWine(wine, details) {
+    const { data, error } = await supabase
+      .from('wines')
+      .update({
+        producer: details.producer || '',
+        wine_name: details.wineName || 'New wine',
+        vintage: details.vintage || '',
+        colour: details.colour || '',
+        country: details.country || '',
+        region: details.region || '',
+        appellation: details.appellation || '',
+        bottle_size: details.bottleSize || '750ml',
+        quantity: Number(details.quantity || 0),
+        drinking_from: details.drinkFrom ? Number(details.drinkFrom) : null,
+        drinking_to: details.drinkTo ? Number(details.drinkTo) : null,
+        notes: details.notes || '',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', wine.id)
+      .select('*')
+      .single();
+
+    if (error || !data) {
+      console.error('Edit wine error:', error);
+      return null;
+    }
+
+    const updatedWine = wineFromDatabase(data);
+    updateWineInState(updatedWine);
+    openWine(updatedWine);
+    return updatedWine;
+  }
+
   if (screen === 'detail' && selectedWine) {
     return (
       <WineDetail
@@ -122,7 +155,18 @@ export default function App() {
         onBack={() => setScreen('home')}
         onAddOne={() => changeQuantity(selectedWine, 1)}
         onConsumeOne={() => changeQuantity(selectedWine, -1)}
+        onEdit={() => setScreen('edit')}
         savePhotoForWine={savePhotoForWine}
+      />
+    );
+  }
+
+  if (screen === 'edit' && selectedWine) {
+    return (
+      <EditWine
+        wine={selectedWine}
+        onBack={() => setScreen('detail')}
+        onSave={saveEditedWine}
       />
     );
   }
@@ -148,15 +192,6 @@ export default function App() {
     );
   }
 
-  if (screen === 'wine-list') {
-    return (
-      <WineList
-        wines={wines}
-        onBack={() => setScreen('home')}
-      />
-    );
-  }
-
   return (
     <Home
       wines={wines}
@@ -166,7 +201,6 @@ export default function App() {
       onOpenWine={openWine}
       onScan={() => setScreen('scan')}
       onAddManual={() => setScreen('manual')}
-      onWineList={() => setScreen('wine-list')}
     />
   );
 }
