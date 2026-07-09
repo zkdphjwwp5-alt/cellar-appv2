@@ -12,7 +12,7 @@
     "react-dom": "latest",
     "lucide-react": "latest",
     "@supabase/supabase-js": "latest",
-    "pdfkit": "latest"
+    "jspdf": "latest"
   },
   "devDependencies": {}
 }
