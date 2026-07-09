@@ -7,6 +7,10 @@ function clean(value) {
   return String(value ?? '').trim();
 }
 
+function sameText(a, b) {
+  return clean(a).toLowerCase() === clean(b).toLowerCase();
+}
+
 function colourGroup(wine) {
   const colour = clean(wine.colour).toLowerCase();
   if (colour.includes('sparkling') || colour.includes('champagne')) return 'Sparkling';
@@ -38,6 +42,9 @@ function sortWines(wines) {
     const producerCompare = clean(a.producer || a.fullName).localeCompare(clean(b.producer || b.fullName));
     if (producerCompare !== 0) return producerCompare;
 
+    const nameCompare = clean(a.name || a.wine_name).localeCompare(clean(b.name || b.wine_name));
+    if (nameCompare !== 0) return nameCompare;
+
     return clean(a.vintage).localeCompare(clean(b.vintage), undefined, { numeric: true });
   });
 }
@@ -57,25 +64,65 @@ function groupWines(wines) {
   }, {});
 }
 
-function wineRows(regionWines) {
-  return regionWines.map(wine => {
+function groupByWine(regionWines) {
+  const grouped = new Map();
+
+  for (const wine of regionWines) {
     const producer = clean(wine.producer || wine.fullName);
-    const name = clean(wine.name || wine.wine_name);
+    const wineName = clean(wine.name || wine.wine_name);
     const appellation = clean(wine.appellation);
-    const vintage = clean(wine.vintage) || 'NV';
+    const key = [producer.toLowerCase(), wineName.toLowerCase(), appellation.toLowerCase()].join('|');
 
-    const stack = [{ text: producer, style: 'producer' }, { text: name, style: 'wineName' }];
-
-    if (appellation && !name.toLowerCase().includes(appellation.toLowerCase())) {
-      stack.push({ text: appellation, style: 'appellation' });
+    if (!grouped.has(key)) {
+      grouped.set(key, {
+        producer,
+        wineName,
+        appellation,
+        entries: []
+      });
     }
 
+    grouped.get(key).entries.push({
+      vintage: clean(wine.vintage) || 'NV',
+      size: clean(wine.size || wine.bottle_size) || '750ml'
+    });
+  }
+
+  return [...grouped.values()].map(item => ({
+    ...item,
+    entries: item.entries.sort((a, b) => {
+      const vintageCompare = a.vintage.localeCompare(b.vintage, undefined, { numeric: true });
+      if (vintageCompare !== 0) return vintageCompare;
+      return a.size.localeCompare(b.size, undefined, { numeric: true });
+    })
+  }));
+}
+
+function wineRows(regionWines) {
+  return groupByWine(regionWines).map(item => {
+    const displayName = sameText(item.producer, item.wineName) || !item.wineName
+      ? item.producer
+      : `${item.producer} — ${item.wineName}`;
+
     return {
-      margin: [22, 4, 0, 7],
+      margin: [22, 4, 0, 9],
       unbreakable: true,
       columns: [
-        { width: '*', stack },
-        { width: 50, text: vintage, style: 'vintage', alignment: 'right' }
+        {
+          width: '*',
+          stack: [
+            { text: displayName, style: 'producer' },
+            item.appellation ? { text: item.appellation, style: 'appellation' } : { text: '', margin: [0, 0, 0, 0] }
+          ]
+        },
+        {
+          width: 82,
+          stack: item.entries.map(entry => ({
+            text: `${entry.vintage} · ${entry.size}`,
+            style: 'vintage',
+            alignment: 'right'
+          }))
+        }
       ]
     };
   });
@@ -146,9 +193,8 @@ export function downloadWineListPdf(wines) {
       country: { fontSize: 9, bold: true, color: '#17110f' },
       region: { fontSize: 16, color: '#5a1d27' },
       producer: { fontSize: 10.5, bold: true, color: '#17110f' },
-      wineName: { fontSize: 10.5, color: '#3e3632', margin: [0, 2, 0, 0] },
-      appellation: { fontSize: 8.5, color: '#756b66', margin: [0, 2, 0, 0] },
-      vintage: { fontSize: 11, color: '#17110f' },
+      appellation: { fontSize: 8.5, italics: true, color: '#756b66', margin: [0, 2, 0, 0] },
+      vintage: { fontSize: 10.5, color: '#17110f', lineHeight: 1.25 },
       summaryTitle: { fontSize: 28, color: '#17110f' },
       summaryText: { fontSize: 12, color: '#5a514d', lineHeight: 1.4 }
     }
