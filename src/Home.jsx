@@ -3,8 +3,9 @@ import { AlertCircle, Camera, Download, Plus, RefreshCw, Search, Wine } from 'lu
 import WineCard from './WineCard.jsx';
 import { clean } from './helpers.js';
 import { exportWinesToCsv } from './exportCsv.js';
+import { downloadWineListPdf } from './pdfWineList.js';
 
-export default function Home({ wines, loading, loadError, onRetry, onOpenWine, onScan, onAddManual, onWineList }) {
+export default function Home({ wines, loading, loadError, onRetry, onOpenWine, onScan }) {
   const [query, setQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [showSort, setShowSort] = useState(false);
@@ -68,7 +69,7 @@ export default function Home({ wines, loading, loadError, onRetry, onOpenWine, o
         <section className="export-menu">
           <button onClick={() => exportWinesToCsv(wines, 'all')}>Export all wines CSV</button>
           <button onClick={() => exportWinesToCsv(filtered, 'filtered')}>Export filtered CSV</button>
-          <button onClick={onWineList}>Print wine list</button>
+          <button onClick={() => downloadWineListPdf(wines)}>Download wine list PDF</button>
         </section>
       )}
 
@@ -91,7 +92,7 @@ export default function Home({ wines, loading, loadError, onRetry, onOpenWine, o
 
       <section className="actions">
         <button onClick={onScan}><Camera /> Scan Bottle</button>
-        <button onClick={onAddManual}><Plus /> Add Manually</button>
+        <button onClick={onScan}><Plus /> Add Manually</button>
       </section>
 
       <label className="search">
