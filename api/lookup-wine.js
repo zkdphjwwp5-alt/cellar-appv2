@@ -14,7 +14,7 @@ export default async function handler(req, res) {
         model: 'gpt-4o-mini',
         response_format: { type: 'json_object' },
         messages: [
-          { role: 'system', content: 'You are a wine catalogue assistant. Return only JSON with a wines array. Each wine must include producer, wine_name, vintage, colour, country, region, subregion, appellation, bottle_size, drink_from, drink_to, notes, confidence. Use empty strings if unsure.' },
+          { role: 'system', content: 'You are a wine catalogue assistant. Return only JSON with a wines array. Each wine must include producer, wine_name, vintage, colour, country, region, appellation, bottle_size, drink_from, drink_to, notes, confidence. Use empty strings if unsure.' },
           { role: 'user', content: `Find up to 5 likely wine catalogue matches for: ${query}` }
         ],
         max_tokens: 700

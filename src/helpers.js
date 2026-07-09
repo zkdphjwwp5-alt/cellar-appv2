@@ -19,19 +19,17 @@ export function wineFromDatabase(row) {
     producer,
     name: wineName || fullName,
     fullName,
-    category: clean(row.category),
+    category: clean(row.style),
     colour: clean(row.colour),
     country: clean(row.country),
     region: clean(row.region),
-    subregion: clean(row.subregion),
     appellation: clean(row.appellation),
     size: clean(row.bottle_size) || '750ml',
-    storageLocation: clean(row.storage_location) || 'Not set yet',
     drinkFrom: clean(row.drinking_from),
     drinkTo: clean(row.drinking_to),
     notes: clean(row.notes),
     photoUrl: clean(row.photo_url),
-    locationText: [row.country, row.region, row.subregion, row.appellation].map(clean).filter(Boolean).join(', ')
+    locationText: [row.country, row.region, row.appellation].map(clean).filter(Boolean).join(', ')
   };
 }
 

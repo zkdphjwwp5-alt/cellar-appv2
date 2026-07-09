@@ -1,4 +1,7 @@
-import { jsPDF } from 'jspdf';
+import pdfMake from 'pdfmake/build/pdfmake';
+import pdfFonts from 'pdfmake/build/vfs_fonts';
+
+pdfMake.vfs = pdfFonts.vfs;
 
 function clean(value) {
   return String(value ?? '').trim();
@@ -25,12 +28,16 @@ function sortWines(wines) {
   return [...wines].sort((a, b) => {
     const groupCompare = groupOrder.indexOf(colourGroup(a)) - groupOrder.indexOf(colourGroup(b));
     if (groupCompare !== 0) return groupCompare;
+
     const countryCompare = clean(a.country).localeCompare(clean(b.country));
     if (countryCompare !== 0) return countryCompare;
+
     const regionCompare = clean(a.region).localeCompare(clean(b.region));
     if (regionCompare !== 0) return regionCompare;
+
     const producerCompare = clean(a.producer || a.fullName).localeCompare(clean(b.producer || b.fullName));
     if (producerCompare !== 0) return producerCompare;
+
     return clean(a.vintage).localeCompare(clean(b.vintage), undefined, { numeric: true });
   });
 }
@@ -40,32 +47,44 @@ function groupWines(wines) {
     const group = colourGroup(wine);
     const country = clean(wine.country) || 'Other';
     const region = clean(wine.region) || 'Other';
+
     if (!groups[group]) groups[group] = {};
     if (!groups[group][country]) groups[group][country] = {};
     if (!groups[group][country][region]) groups[group][country][region] = [];
+
     groups[group][country][region].push(wine);
     return groups;
   }, {});
 }
 
-function addFooter(doc, pageNumber) {
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8);
-  doc.setTextColor(120, 112, 106);
-  doc.text(`My Cellar · ${monthYear()} · Page ${pageNumber}`, 105, 287, { align: 'center' });
-}
+function wineRows(regionWines) {
+  return regionWines.map(wine => {
+    const producer = clean(wine.producer || wine.fullName);
+    const name = clean(wine.name || wine.wine_name);
+    const appellation = clean(wine.appellation);
+    const vintage = clean(wine.vintage) || 'NV';
 
-function ensureSpace(doc, state, needed) {
-  if (state.y + needed > 275) {
-    addFooter(doc, state.page);
-    doc.addPage();
-    state.page += 1;
-    state.y = 22;
-  }
+    const stack = [{ text: producer, style: 'producer' }, { text: name, style: 'wineName' }];
+
+    if (appellation && !name.toLowerCase().includes(appellation.toLowerCase())) {
+      stack.push({ text: appellation, style: 'appellation' });
+    }
+
+    return {
+      margin: [22, 4, 0, 7],
+      unbreakable: true,
+      columns: [
+        { width: '*', stack },
+        { width: 50, text: vintage, style: 'vintage', alignment: 'right' }
+      ]
+    };
+  });
 }
 
 export function downloadWineListPdf(wines) {
   const inStock = wines.filter(wine => Number(wine.quantity || 0) > 0);
+  const grouped = groupWines(inStock);
+
   const stats = {
     wines: inStock.length,
     bottles: inStock.reduce((sum, wine) => sum + Number(wine.quantity || 0), 0),
@@ -73,117 +92,68 @@ export function downloadWineListPdf(wines) {
     regions: new Set(inStock.map(wine => wine.region).filter(Boolean)).size
   };
 
-  const grouped = groupWines(inStock);
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-
-  doc.setFillColor(251, 250, 247);
-  doc.rect(0, 0, 210, 297, 'F');
-  doc.setTextColor(90, 29, 39);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(10);
-  doc.text('INN FARM CELLAR', 105, 88, { align: 'center' });
-  doc.setTextColor(23, 17, 15);
-  doc.setFont('times', 'normal');
-  doc.setFontSize(44);
-  doc.text('Wine List', 105, 112, { align: 'center' });
-  doc.setTextColor(90, 81, 77);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(12);
-  doc.text(monthYear(), 105, 128, { align: 'center' });
-  doc.setDrawColor(222, 216, 207);
-  doc.line(68, 145, 142, 145);
-  doc.setTextColor(90, 29, 39);
-  doc.setFontSize(11);
-  doc.text(`${stats.wines} wines`, 105, 162, { align: 'center' });
-  doc.text(`${stats.bottles} bottles`, 105, 172, { align: 'center' });
-  doc.setTextColor(117, 107, 102);
-  doc.setFontSize(9);
-  doc.text('Current cellar selection', 105, 214, { align: 'center' });
-
-  doc.addPage();
-  const state = { y: 22, page: 2 };
+  const content = [
+    { text: 'INN FARM CELLAR', style: 'coverKicker', alignment: 'center', margin: [0, 170, 0, 14] },
+    { text: 'Wine List', style: 'coverTitle', alignment: 'center' },
+    { text: monthYear(), style: 'coverDate', alignment: 'center', margin: [0, 16, 0, 28] },
+    { canvas: [{ type: 'line', x1: 165, y1: 0, x2: 350, y2: 0, lineWidth: 0.8, lineColor: '#ded8cf' }] },
+    { text: `${stats.wines} wines\n${stats.bottles} bottles`, style: 'coverStats', alignment: 'center', margin: [0, 26, 0, 0], pageBreak: 'after' }
+  ];
 
   for (const group of groupOrder) {
     const countries = grouped[group];
     if (!countries) continue;
-    ensureSpace(doc, state, 30);
-    doc.setTextColor(90, 29, 39);
-    doc.setFont('times', 'normal');
-    doc.setFontSize(24);
-    doc.text(group, 18, state.y);
-    state.y += 4;
-    doc.setDrawColor(222, 216, 207);
-    doc.line(18, state.y, 192, state.y);
-    state.y += 10;
+
+    content.push({ text: group, style: 'sectionTitle', margin: [0, 0, 0, 8] });
+    content.push({ canvas: [{ type: 'line', x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 0.8, lineColor: '#ded8cf' }], margin: [0, 0, 0, 12] });
 
     for (const [country, regions] of Object.entries(countries)) {
-      ensureSpace(doc, state, 18);
-      doc.setTextColor(23, 17, 15);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(9);
-      doc.text(country.toUpperCase(), 18, state.y);
-      state.y += 7;
+      content.push({ text: country.toUpperCase(), style: 'country', margin: [0, 12, 0, 6] });
 
       for (const [region, regionWines] of Object.entries(regions)) {
-        ensureSpace(doc, state, 16);
-        doc.setTextColor(90, 29, 39);
-        doc.setFont('times', 'normal');
-        doc.setFontSize(15);
-        doc.text(region, 26, state.y);
-        state.y += 6;
-
-        for (const wine of regionWines) {
-          ensureSpace(doc, state, 20);
-          const producer = clean(wine.producer || wine.fullName);
-          const name = clean(wine.name || wine.wine_name);
-          const appellation = clean(wine.appellation);
-          const vintage = clean(wine.vintage) || 'NV';
-          doc.setTextColor(23, 17, 15);
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(10);
-          doc.text(producer, 34, state.y);
-          doc.setFont('times', 'normal');
-          doc.setFontSize(11);
-          doc.text(vintage, 192, state.y, { align: 'right' });
-          state.y += 5;
-          doc.setTextColor(62, 54, 50);
-          doc.setFont('times', 'normal');
-          doc.setFontSize(10.5);
-          const nameLines = doc.splitTextToSize(name, 120);
-          doc.text(nameLines, 34, state.y);
-          state.y += nameLines.length * 5;
-          if (appellation && !name.toLowerCase().includes(appellation.toLowerCase())) {
-            doc.setTextColor(117, 107, 102);
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(8);
-            doc.text(appellation, 34, state.y);
-            state.y += 4;
-          }
-          doc.setDrawColor(238, 231, 223);
-          doc.line(34, state.y + 1, 192, state.y + 1);
-          state.y += 7;
-        }
-        state.y += 3;
+        content.push({ text: region, style: 'region', margin: [12, 6, 0, 4] });
+        content.push(...wineRows(regionWines));
       }
-      state.y += 5;
     }
-    state.y += 8;
+
+    content.push({ text: '', margin: [0, 16, 0, 0], pageBreak: 'after' });
   }
 
-  addFooter(doc, state.page);
-  doc.addPage();
-  doc.setFillColor(251, 250, 247);
-  doc.rect(0, 0, 210, 297, 'F');
-  doc.setTextColor(23, 17, 15);
-  doc.setFont('times', 'normal');
-  doc.setFontSize(28);
-  doc.text('Cellar Summary', 105, 108, { align: 'center' });
-  doc.setTextColor(90, 81, 77);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(12);
-  doc.text(`${stats.wines} wines · ${stats.bottles} bottles`, 105, 128, { align: 'center' });
-  doc.text(`${stats.countries} countries · ${stats.regions} regions`, 105, 138, { align: 'center' });
+  content.push(
+    { text: 'Cellar Summary', style: 'summaryTitle', alignment: 'center', margin: [0, 220, 0, 18] },
+    { text: `${stats.wines} wines · ${stats.bottles} bottles\n${stats.countries} countries · ${stats.regions} regions`, style: 'summaryText', alignment: 'center' }
+  );
+
+  const docDefinition = {
+    pageSize: 'A4',
+    pageMargins: [40, 44, 40, 52],
+    background: () => ({ canvas: [{ type: 'rect', x: 0, y: 0, w: 595.28, h: 841.89, color: '#fbfaf7' }] }),
+    footer: (currentPage, pageCount) => ({
+      text: currentPage === 1 ? '' : `My Cellar · ${monthYear()} · Page ${currentPage} of ${pageCount}`,
+      alignment: 'center',
+      fontSize: 8,
+      color: '#756b66',
+      margin: [0, 14, 0, 0]
+    }),
+    content,
+    defaultStyle: { font: 'Roboto', color: '#17110f' },
+    styles: {
+      coverKicker: { fontSize: 10, color: '#5a1d27', bold: true },
+      coverTitle: { fontSize: 54, color: '#17110f' },
+      coverDate: { fontSize: 12, color: '#5a514d' },
+      coverStats: { fontSize: 12, color: '#5a1d27', lineHeight: 1.5 },
+      sectionTitle: { fontSize: 28, color: '#5a1d27' },
+      country: { fontSize: 9, bold: true, color: '#17110f' },
+      region: { fontSize: 16, color: '#5a1d27' },
+      producer: { fontSize: 10.5, bold: true, color: '#17110f' },
+      wineName: { fontSize: 10.5, color: '#3e3632', margin: [0, 2, 0, 0] },
+      appellation: { fontSize: 8.5, color: '#756b66', margin: [0, 2, 0, 0] },
+      vintage: { fontSize: 11, color: '#17110f' },
+      summaryTitle: { fontSize: 28, color: '#17110f' },
+      summaryText: { fontSize: 12, color: '#5a514d', lineHeight: 1.4 }
+    }
+  };
 
   const today = new Date().toISOString().slice(0, 10);
-  doc.save(`inn-farm-cellar-wine-list-${today}.pdf`);
+  pdfMake.createPdf(docDefinition).download(`inn-farm-cellar-wine-list-${today}.pdf`);
 }

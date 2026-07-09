@@ -1,8 +1,11 @@
-# My Cellar v1.0 clean Vite rebuild
+# My Cellar v1.4.0
 
-Uses a standard Vite structure with all app code in src/.
+Complete clean snapshot.
 
-Required Vercel variables:
-- VITE_SUPABASE_URL
-- VITE_SUPABASE_ANON_KEY
-- OPENAI_API_KEY
+Includes:
+- AI label scan
+- AI manual add
+- Edit wine
+- CSV export
+- Unicode PDF wine list using pdfmake
+- Search, filter and sort

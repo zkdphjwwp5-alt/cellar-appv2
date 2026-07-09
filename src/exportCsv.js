@@ -1,21 +1,5 @@
 export function exportWinesToCsv(wines, suffix = 'all') {
-  const headers = [
-    'producer',
-    'wine_name',
-    'vintage',
-    'colour',
-    'country',
-    'region',
-    'subregion',
-    'appellation',
-    'bottle_size',
-    'quantity',
-    'storage_location',
-    'drinking_from',
-    'drinking_to',
-    'photo_url',
-    'notes'
-  ];
+  const headers = ['producer','wine_name','vintage','colour','country','region','appellation','bottle_size','quantity','drinking_from','drinking_to','photo_url','notes'];
 
   const rows = wines.map(wine => ({
     producer: wine.producer || '',
@@ -24,11 +8,9 @@ export function exportWinesToCsv(wines, suffix = 'all') {
     colour: wine.colour || '',
     country: wine.country || '',
     region: wine.region || '',
-    subregion: wine.subregion || '',
     appellation: wine.appellation || '',
     bottle_size: wine.size || '',
     quantity: wine.quantity ?? 0,
-    storage_location: wine.storageLocation || '',
     drinking_from: wine.drinkFrom || '',
     drinking_to: wine.drinkTo || '',
     photo_url: wine.photoUrl || '',
