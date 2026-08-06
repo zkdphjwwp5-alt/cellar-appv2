@@ -1,9 +1,14 @@
-# My Cellar v1.5.0 Offline First
+# My Cellar v1.5.0 — Refactor Baseline
 
-Features:
-- Service worker caches the app.
-- IndexedDB caches the full cellar.
-- Search and browsing work without reception.
-- Quantity changes, edits and new wines queue offline.
-- Changes sync automatically when connectivity returns.
-- Photo uploads still require connectivity.
+Complete project snapshot with the agreed structure.
+
+- `src/components`
+- `src/pages`
+- `src/services`
+- `src/offline`
+- `src/pdf`
+- `src/hooks`
+- `src/utils`
+- `src/assets`
+
+Existing features are preserved. Offline functionality is deferred to v1.6.

@@ -12,8 +12,7 @@
     "pdfmake": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "vite": "latest",
-    "dexie": "latest"
+    "vite": "latest"
   },
   "devDependencies": {}
 }
